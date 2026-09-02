@@ -196,17 +196,22 @@ api.interceptors.response.use(
         })
       }
 
-      // Civic issues list
-      if (url.includes('/civic-issues/') && method === 'get') {
-        const parts = url.split('/').filter(Boolean)
-        const issueId = parts[parts.length - 1]
-        const matched = MOCK_ISSUES.find(i => i.id === issueId || i.issue_number === issueId)
+      // Civic issues — handle list, nearby, and single issue lookups
+      if (url.includes('civic-issues') && method === 'get') {
+        // Single issue lookup: /civic-issues/ci-1
+        const singleMatch = url.match(/civic-issues\/([^/?&]+)$/)
+        if (singleMatch && !url.includes('nearby')) {
+          const issueId = singleMatch[1]
+          const matched = MOCK_ISSUES.find(i => i.id === issueId || i.issue_number === issueId)
+          return Promise.resolve({
+            data: matched || MOCK_ISSUES[0],
+            status: 200, statusText: 'OK', headers: {}, config: err.config,
+          })
+        }
+        // All other civic-issues calls (list, nearby, search) → return full array
         return Promise.resolve({
-          data: matched || (issueId && issueId !== 'civic-issues' ? MOCK_ISSUES[0] : MOCK_ISSUES),
-          status: 200,
-          statusText: 'OK',
-          headers: {},
-          config: err.config,
+          data: MOCK_ISSUES,
+          status: 200, statusText: 'OK', headers: {}, config: err.config,
         })
       }
 
