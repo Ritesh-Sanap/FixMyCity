@@ -64,16 +64,18 @@ export const useSOSStore = create<SOSState>((set, get) => ({
 
   fetchContacts: async () => {
     try {
-      const res = await api.get<EmergencyContact[]>('/sos/contacts')
-      set({ contacts: res.data })
-    } catch {}
+      const res = await api.get('/sos/contacts')
+      const data = res.data
+      set({ contacts: Array.isArray(data) ? data : [] })
+    } catch { set({ contacts: [] }) }
   },
 
   fetchSafetyZones: async () => {
     try {
-      const res = await api.get<SafetyZone[]>('/sos/safety-zones')
-      set({ safetyZones: res.data })
-    } catch {}
+      const res = await api.get('/sos/safety-zones')
+      const data = res.data
+      set({ safetyZones: Array.isArray(data) ? data : [] })
+    } catch { set({ safetyZones: [] }) }
   },
 
   triggerSOS: async (lat, lon, address, ward) => {
