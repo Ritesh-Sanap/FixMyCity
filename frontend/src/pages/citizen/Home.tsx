@@ -14,14 +14,24 @@ export default function CitizenHome() {
   const [recentIssues, setRecentIssues] = useState<CivicIssue[]>([])
   const [location, setLocation] = useState('Detecting location...')
 
-  // ── All existing data-fetching logic preserved exactly ─────────────────────
+  // ── Data fetching with safe array guard ──────────────────────────────────
   useEffect(() => {
-    api.get<CivicIssue[]>('/civic-issues/?limit=5').then((r) => setRecentIssues(r.data)).catch(() => {})
+    api.get('/civic-issues/?limit=5')
+      .then((r) => {
+        const data = r.data
+        if (Array.isArray(data)) setRecentIssues(data)
+        else if (data && Array.isArray(data.items)) setRecentIssues(data.items)
+        else if (data && Array.isArray(data.issues)) setRecentIssues(data.issues)
+        else setRecentIssues([])
+      })
+      .catch(() => setRecentIssues([]))
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setLocation(`${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`),
         () => setLocation('Pune, Maharashtra (approx.)')
       )
+    } else {
+      setLocation('Pune, Maharashtra (approx.)')
     }
   }, [])
 

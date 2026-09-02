@@ -32,22 +32,34 @@ export default function NearbyIssues() {
   const [userPos, setUserPos] = useState<[number, number]>([18.5204, 73.8567])
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude
-        const lon = pos.coords.longitude
-        setUserPos([lat, lon])
-        api.get<CivicIssue[]>(`/civic-issues/nearby?lat=${lat}&lon=${lon}&radius_meters=2000`)
-          .then((r) => setIssues(r.data))
-          .finally(() => setLoading(false))
-      },
-      () => {
-        // Demo fallback — load all issues near Pune
-        api.get<CivicIssue[]>(`/civic-issues/nearby?lat=18.5204&lon=73.8567&radius_meters=20000`)
-          .then((r) => setIssues(r.data))
-          .finally(() => setLoading(false))
-      }
-    )
+    const safeSet = (r: any) => {
+      const data = r.data
+      if (Array.isArray(data)) setIssues(data)
+      else if (data && Array.isArray(data.items)) setIssues(data.items)
+      else if (data && Array.isArray(data.issues)) setIssues(data.issues)
+      else setIssues([])
+      setLoading(false)
+    }
+    const fallback = () => {
+      api.get(`/civic-issues/?limit=20`)
+        .then(safeSet)
+        .catch(() => { setIssues([]); setLoading(false) })
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude
+          const lon = pos.coords.longitude
+          setUserPos([lat, lon])
+          api.get(`/civic-issues/nearby?lat=${lat}&lon=${lon}&radius_meters=2000`)
+            .then(safeSet)
+            .catch(fallback)
+        },
+        fallback
+      )
+    } else {
+      fallback()
+    }
   }, [])
 
   return (

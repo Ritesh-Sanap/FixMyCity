@@ -11,8 +11,15 @@ export default function MyReports() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<Complaint[]>('/complaints/my')
-      .then((r) => setComplaints(r.data))
+    api.get('/complaints/my')
+      .then((r) => {
+        const data = r.data
+        if (Array.isArray(data)) setComplaints(data)
+        else if (data && Array.isArray(data.items)) setComplaints(data.items)
+        else if (data && Array.isArray(data.complaints)) setComplaints(data.complaints)
+        else setComplaints([])
+      })
+      .catch(() => setComplaints([]))
       .finally(() => setLoading(false))
   }, [])
 

@@ -46,12 +46,13 @@ export default function OfficerDashboard() {
   const [filterCategory, setFilterCategory] = useState('')
 
   useEffect(() => {
-    api.get<DashboardStats>('/dashboard/stats').then(r => setStats(r.data)).catch(() => {})
-    api.get<MapIssue[]>('/dashboard/map-data').then(r => setMapIssues(r.data)).catch(() => {})
-    api.get<CivicIssue[]>('/civic-issues/?limit=100').then(r => setIssues(r.data)).catch(() => {})
-    api.get<any[]>('/dashboard/predictions').then(r => setPredictions(r.data)).catch(() => {})
-    api.get<any[]>('/sos/active-alerts').then(r => setActiveSosAlerts(r.data)).catch(() => {})
-    api.get<any[]>('/sos/safety-zones').then(r => setSafetyZones(r.data)).catch(() => {})
+    const safeArr = (data: any) => Array.isArray(data) ? data : (data?.items || data?.issues || data?.alerts || data?.zones || [])
+    api.get('/dashboard/stats').then(r => setStats(r.data)).catch(() => {})
+    api.get('/dashboard/map-data').then(r => setMapIssues(safeArr(r.data))).catch(() => {})
+    api.get('/civic-issues/?limit=100').then(r => setIssues(safeArr(r.data))).catch(() => {})
+    api.get('/dashboard/predictions').then(r => setPredictions(safeArr(r.data))).catch(() => {})
+    api.get('/sos/active-alerts').then(r => setActiveSosAlerts(safeArr(r.data))).catch(() => {})
+    api.get('/sos/safety-zones').then(r => setSafetyZones(safeArr(r.data))).catch(() => {})
   }, [])
 
   const filteredIssues = issues.filter(i => {
